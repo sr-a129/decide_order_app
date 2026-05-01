@@ -2,6 +2,23 @@ import streamlit as st
 import csv
 import random
 import pandas as pd
+from fpdf import FPDF
+
+# --- PDF生成用のクラス（日本語非対応の暫定版、英語/数字のみ） ---
+def create_pdf(full_order):
+    pdf = FPDF()
+    pdf.set_auto_page_break(auto=True, margin=15)
+    pdf.add_page()
+    pdf.set_font("Arial", size=12)
+    pdf.cell(200, 10, txt="LaissezFaire T.C. Match Order", ln=True, align='C')
+    pdf.ln(10)
+    for r, matches in enumerate(full_order):
+        pdf.cell(0, 10, txt=f"--- Round {r+1} ---", ln=True)
+        for i, m in enumerate(matches):
+            txt = f"C{i+1} [{m['type']}]: {m['red'][0]['name']}&{m['red'][1]['name']} vs {m['white'][0]['name']}&{m['white'][1]['name']}"
+            pdf.cell(0, 8, txt=txt, ln=True)
+        pdf.ln(5)
+    return pdf.output(dest='S').encode('latin-1')
 
 # --- 1. 基本ロジック（ここが抜けていた可能性があります） ---
 
@@ -129,9 +146,7 @@ def main():
             red, white = split_red_white(players)
 
             # 固定ペアの解析
-            fixed_pairs = []
-            if fixed_pair_input and "," in fixed_pair_input:
-                fixed_pairs.append(fixed_pair_input.split(","))
+            fixed_pairs = [fixed_pair_input.split(",")] if fixed_pair_input and "," in fixed_pair_input else []
             
             full_order = []
             for r in range(rounds_num):
@@ -196,24 +211,28 @@ def main():
                     all_players = st.session_state.red + st.session_state.white
                     matched = [p for p in all_players if search_text in p['name']]
                     if matched:
-                        target = st.selectbox("対象者を選択:", [p['name'] for p in matched]) if len(matched) > 1 else matched[0]['name']
-                        st.subheader(f"【{target} さんの予定】")
+                        target_name = st.selectbox("対象者を選択:", [p['name'] for p in matched]) if len(matched) > 1 else matched[0]['name']
+                        st.subheader(f"【{target_name} さんの予定】")
                         for r, m_in_r in enumerate(st.session_state.full_order):
                             for c, m in enumerate(m_in_r):
-                                if any(p['name'] == target for p in m[0]+m[1]):
-                                    is_red = any(p['name'] == target for p in m[0])
-                                    my_t, opp_t = (m[0], m[1]) if is_red else (m[1], m[0])
-                                    partner = next(p['name'] for p in my_t if p['name'] != target)
+                                if any(p['name'] == target_name for p in m[0]+m[1]):
+                                    is_red = any(p['name'] == target_name for p in m[0])
+                                    my_t, opp_t = (m["red"], m["white"]) if is_red else (m["white"], m["red"])
+                                    partner = next(p['name'] for p in my_t if p['name'] != target_name)
                                     st.write(f"**R{r+1} C{c+1}**: {partner} とペア / 相手: {opp_t[0]['name']}, {opp_t[1]['name']}")
+                                if not found_any:
+                                    st.info("このラウンドでの試合はありません。")
+                    else:
+                        st.warning("該当するプレイヤーが見つかりません。")
             with tab3:
                 st.header("🚩 紅白チーム分け一覧")
                 col_r, col_w = st.columns(2)
                 with col_r:
                     st.subheader("🔴 紅組")
-                    st.write(", ".join([p['name'] for p in st.session_state.red]))
+                    st.write("\n ".join([f" ・{p['name']}" for p in st.session_state.red]))
                 with col_w:
                     st.subheader("⚪ 白組")
-                    st.write(", ".join([p['name'] for p in st.session_state.white]))
+                    st.write(", ".join([f" ・{p['name']}" for p in st.session_state.white]))
     else:
         st.info("サイドバーからCSVファイルをアップロードしてください。")
 
