@@ -238,8 +238,8 @@ def main():
                                     my_t, opp_t = (m[0], m[1]) if is_red else (m[1], m[0])
                                     partner = next(p['name'] for p in my_t if p['name'] != target_name)
                                     st.write(f"**R{r+1} C{c+1}**: {partner} とペア / 相手: {opp_t[0]['name']}, {opp_t[1]['name']}")
-                            if not found_any:
-                                st.info("このラウンドでの試合はありません。")
+                        if not found_any:
+                            st.info("このラウンドでの試合はありません。")
                     else:
                         st.warning("該当するプレイヤーが見つかりません。")
             with tab3:
@@ -250,7 +250,7 @@ def main():
                     st.write("\n ".join([f" ・{p['name']}" for p in st.session_state.red]))
                 with col_w:
                     st.subheader("⚪ 白組")
-                    st.write(", ".join([f" ・{p['name']}" for p in st.session_state.white]))
+                    st.write("\n ".join([f" ・{p['name']}" for p in st.session_state.white]))
     else:
         st.info("サイドバーからCSVファイルをアップロードしてください。")
 
