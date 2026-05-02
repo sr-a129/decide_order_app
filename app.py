@@ -217,9 +217,11 @@ def main():
                     if matched:
                         target_name = st.selectbox("対象者を選択:", [p['name'] for p in matched]) if len(matched) > 1 else matched[0]['name']
                         st.subheader(f"【{target_name} さんの予定】")
+                        found_any = False
                         for r, m_in_r in enumerate(st.session_state.full_order):
                             for c, m in enumerate(m_in_r):
                                 if any(p['name'] == target_name for p in m[0]+m[1]):
+                                    found_any = True
                                     is_red = any(p['name'] == target_name for p in m[0])
                                     my_t, opp_t = (m["red"], m["white"]) if is_red else (m["white"], m["red"])
                                     partner = next(p['name'] for p in my_t if p['name'] != target_name)
