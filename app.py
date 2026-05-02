@@ -40,13 +40,16 @@ def load_players_from_file(uploaded_file):
 def split_red_white(players):
     groups = {}
     for p in players:
-        key = (p["gender"], p["grade"], p["skill"])
+        skill_band = 1 if p["skill"] <= 2 else 2
+        key = (p["gender"], p["grade"], skill_band)
         groups.setdefault(key, []).append(p)
     red, white = [], []
-    for group in groups.values():
+    for key, group in groups.items():
         random.shuffle(group)
         mid = len(group) // 2
         red.extend(group[:mid]); white.extend(group[mid:])
+    random.shuffle(red)
+    random.shuffle(white)
     return red, white
 
 def make_pairs_by_count(team, mix_count, md_count, fd_count, fixed_pairs=None):
@@ -88,6 +91,10 @@ def make_pairs_by_count(team, mix_count, md_count, fd_count, fixed_pairs=None):
         if current_mix >= mix_count or not females: break
         # パートナー未経験・実力差を考慮してソート
         candidates = sorted(females, key=lambda f: (f["mix_count"], f["name"] in m["partners"], abs(f["skill"] - m["skill"])))
+        # NGペアは除外
+        candidates = [f for f in candidates if (m["name"], f["name"]) not in ng_pairs and (f["name"], m["name"]) not in ng_pairs]
+        if not candidates:
+            continue
         f = candidates[0]
         pairs.append((m, f))
         males.remove(m)
@@ -138,6 +145,9 @@ def main():
     
     st.sidebar.header("2. 個別ペア配慮")
     fixed_pair_input = st.sidebar.text_input("固定したいペア（例: 田中,佐藤）", "")
+
+    ng_pair_input = st.sidebar.text_input("共演NGペア（例: 田中,佐藤）", "")
+    ng_pairs = [ng_pair_input.split(",")] if ng_pair_input and "," in ng_pair_input else []
 
     if uploaded_file:
         if st.sidebar.button("オーダーを生成・更新"):
@@ -226,8 +236,8 @@ def main():
                                     my_t, opp_t = (m["red"], m["white"]) if is_red else (m["white"], m["red"])
                                     partner = next(p['name'] for p in my_t if p['name'] != target_name)
                                     st.write(f"**R{r+1} C{c+1}**: {partner} とペア / 相手: {opp_t[0]['name']}, {opp_t[1]['name']}")
-                                if not found_any:
-                                    st.info("このラウンドでの試合はありません。")
+                            if not found_any:
+                                st.info("このラウンドでの試合はありません。")
                     else:
                         st.warning("該当するプレイヤーが見つかりません。")
             with tab3:
