@@ -56,6 +56,8 @@ def make_pairs_by_count(team, mix_count, md_count, fd_count, fixed_pairs=None):
     # 個別ペア配慮（指定されたペアを優先的に固定）
     used_names = set()
     pairs = []
+    if ng_pairs is None:
+        ng_pairs = []
     
     # 固定ペアの処理
     if fixed_pairs:
@@ -164,8 +166,8 @@ def main():
                 fd_needed = 1 if r % 2 == 0 else 0 
                 mix_needed = courts_num - fd_needed
                 
-                rp = make_pairs_by_count(red, mix_needed, 0, fd_needed, fixed_pairs)
-                wp = make_pairs_by_count(white, mix_needed, 0, fd_needed, fixed_pairs)
+                rp = make_pairs_by_count(red, mix_needed, 0, fd_needed, fixed_pairs, ng_pairs)
+                wp = make_pairs_by_count(white, mix_needed, 0, fd_needed, fixed_pairs, ng_pairs)
 
                 matches = match_pairs(rp, wp)
                 full_order.append(matches)
