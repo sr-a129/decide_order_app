@@ -235,7 +235,7 @@ def main():
                                 if any(p['name'] == target_name for p in m[0]+m[1]):
                                     found_any = True
                                     is_red = any(p['name'] == target_name for p in m[0])
-                                    my_t, opp_t = (m["red"], m["white"]) if is_red else (m["white"], m["red"])
+                                    my_t, opp_t = (m[0], m[1]) if is_red else (m[1], m[0])
                                     partner = next(p['name'] for p in my_t if p['name'] != target_name)
                                     st.write(f"**R{r+1} C{c+1}**: {partner} とペア / 相手: {opp_t[0]['name']}, {opp_t[1]['name']}")
                             if not found_any:
