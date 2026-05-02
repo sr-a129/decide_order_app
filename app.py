@@ -52,7 +52,7 @@ def split_red_white(players):
     random.shuffle(white)
     return red, white
 
-def make_pairs_by_count(team, mix_count, md_count, fd_count, fixed_pairs=None):
+def make_pairs_by_count(team, mix_count, md_count, fd_count, fixed_pairs=None, ng_pairs=None):
     # 個別ペア配慮（指定されたペアを優先的に固定）
     used_names = set()
     pairs = []
