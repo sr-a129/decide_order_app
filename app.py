@@ -167,6 +167,8 @@ def main():
                         # 1行に3枚のカードを並べる
                         cols = st.columns(3)
                         for i, m in enumerate(matches):
+                            if m[0] is None or m[1] is None:
+                                continue
                             col_idx = i % 3
                             with cols[col_idx]:
                                 # HTMLを使って「枠」と「VS」をデザイン
