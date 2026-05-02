@@ -156,6 +156,10 @@ def main():
                 
                 rp = make_pairs_by_count(red, mix_needed, 0, fd_needed, fixed_pairs)
                 wp = make_pairs_by_count(white, mix_needed, 0, fd_needed, fixed_pairs)
+
+                matches = match_pairs(rp, wp)
+                full_order.append(matches)
+            
             st.session_state.red = red
             st.session_state.white = white
             st.session_state.full_order = full_order
