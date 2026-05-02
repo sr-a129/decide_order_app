@@ -2,23 +2,6 @@ import streamlit as st
 import csv
 import random
 import pandas as pd
-from fpdf import FPDF
-
-# --- PDF生成用のクラス（日本語非対応の暫定版、英語/数字のみ） ---
-def create_pdf(full_order):
-    pdf = FPDF()
-    pdf.set_auto_page_break(auto=True, margin=15)
-    pdf.add_page()
-    pdf.set_font("Arial", size=12)
-    pdf.cell(200, 10, txt="LaissezFaire T.C. Match Order", ln=True, align='C')
-    pdf.ln(10)
-    for r, matches in enumerate(full_order):
-        pdf.cell(0, 10, txt=f"--- Round {r+1} ---", ln=True)
-        for i, m in enumerate(matches):
-            txt = f"C{i+1} [{m['type']}]: {m['red'][0]['name']}&{m['red'][1]['name']} vs {m['white'][0]['name']}&{m['white'][1]['name']}"
-            pdf.cell(0, 8, txt=txt, ln=True)
-        pdf.ln(5)
-    return pdf.output(dest='S').encode('latin-1')
 
 # --- 1. 基本ロジック（ここが抜けていた可能性があります） ---
 
@@ -41,7 +24,7 @@ def split_red_white(players):
     groups = {}
     for p in players:
         skill_band = 1 if p["skill"] <= 2 else 2
-        key = (p["gender"], p["grade"], skill_band)
+        key = (p["gender"], skill_band)
         groups.setdefault(key, []).append(p)
     red, white = [], []
     for key, group in groups.items():
@@ -120,20 +103,14 @@ def make_pairs_by_count(team, mix_count, md_count, fd_count, fixed_pairs=None, n
 
     return pairs
 
-def match_pairs(red_pairs, white_pairs):
-    def get_gp(ps):
-        return {
-            "MD": [p for p in ps if p[0]["gender"] == "M" and p[1]["gender"] == "M"],
-            "FD": [p for p in ps if p[0]["gender"] == "F" and p[1]["gender"] == "F"],
-            "MX": [p for p in ps if p[0]["gender"] != p[1]["gender"]]
-        }
-    r_g, w_g = get_gp(red_pairs), get_gp(white_pairs)
+def match_pairs(red_pairs, white_pairs, courts):
     matches = []
-    for t in ["MD", "FD", "MX"]:
-        for i in range(min(len(r_g[t]), len(w_g[t]))):
-            matches.append((r_g[t][i], w_g[t][i]))
+    for i in range(courts):
+        if i < len(red_pairs) and i < len(white_pairs):
+            matches.append((red_pairs[i], white_pairs[i]))
+        else:
+            matches.append((None, None))
     return matches
-
 # --- 2. Streamlit UI部分 ---
 
 def main():
@@ -169,7 +146,7 @@ def main():
                 rp = make_pairs_by_count(red, mix_needed, 0, fd_needed, fixed_pairs, ng_pairs)
                 wp = make_pairs_by_count(white, mix_needed, 0, fd_needed, fixed_pairs, ng_pairs)
 
-                matches = match_pairs(rp, wp)
+                matches = match_pairs(rp, wp, courts_num)
                 full_order.append(matches)
             
             st.session_state.red = red
@@ -179,11 +156,9 @@ def main():
 
         if 'full_order' in st.session_state:
             tab1, tab2, tab3 = st.tabs(["📋 全体オーダー表", "🔍 個人検索", "🚩 チーム分け"])
+            
             with tab1:
                 st.header("📋 試合オーダー表")
-
-                # 印刷用ボタン
-                show_print_view = st.checkbox("📄 印刷用レイアウトで表示（コピー/印刷用）")
 
                 # ラウンドごとにループ
                 for r, matches in enumerate(st.session_state.full_order):
